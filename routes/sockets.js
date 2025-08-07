@@ -32,6 +32,9 @@ exports.initialize = function (server) {
         type: "serverMessage",
         message: "Welcome to the Chat Room!",
       });
+
+      // broadcase user entry into chat
+      socket.broadcast.emit("user_entered", data);
     });
   });
 };

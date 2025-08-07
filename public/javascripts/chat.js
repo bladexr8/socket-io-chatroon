@@ -26,6 +26,15 @@ socket.on("name_set", function (data) {
   );
 });
 
+socket.on("user_entered", function (user) {
+  $("#messages").append(
+    '<div class="systemMessage">' +
+      user.name +
+      " has joined the room." +
+      "</div>"
+  );
+});
+
 $(function () {
   console.log("Initializing Send Button Handler...");
   $("#send").click(function () {
