@@ -1,36 +1,39 @@
-var socket = io.connect("/");
+const chatInfra = io.connect("/chat_infra");
+const chatCom = io.connect("/chat_com");
 
-socket.on("message", function (data) {
-  //data = JSON.parse(data);
-  if (data.username) {
-    $("#messages").append(
-      '<div class="' +
-        data.type +
-        '"><span class="name">' +
-        data.username +
-        ":</span> " +
-        data.message +
-        "</div>"
-    );
-  } else {
-    $("#messages").append(
-      '<div class="' + data.type + '">' + data.message + "</div>"
-    );
-  }
-});
-
-socket.on("name_set", function (data) {
+chatInfra.on("name_set", function (data) {
   $("#nameform").hide();
   $("#messages").append(
     '<div class="systemMessage">' + "Hello " + data.name + "</div"
   );
 });
 
-socket.on("user_entered", function (user) {
+chatInfra.on("user_entered", function (user) {
   $("#messages").append(
     '<div class="systemMessage">' +
       user.name +
       " has joined the room." +
+      "</div>"
+  );
+});
+
+chatInfra.on("message", function (message) {
+  $("#messages").append(
+    '<div class="' + message.type + '">' + message.message + "</div>"
+  );
+});
+
+chatCom.on("message", function (data) {
+  console.log("Receiving User Message...");
+  console.log(data);
+  //data = JSON.parse(data);
+  $("#messages").append(
+    '<div class="' +
+      data.type +
+      '"><span class="name">' +
+      data.username +
+      ":</span> " +
+      data.message +
       "</div>"
   );
 });
@@ -42,12 +45,13 @@ $(function () {
       message: $("#message").val(),
       type: "userMessage",
     };
-    socket.emit("message", data);
+    console.log("Sending Message over chatCom Channel...");
+    chatCom.emit("message", data);
     $("#message").val("");
   });
   console.log("Initializing Set Name Handler...");
   $("#setname").click(function () {
     console.log("Emitting set_name Event...");
-    socket.emit("set_name", { name: $("#nickname").val() });
+    chatInfra.emit("set_name", { name: $("#nickname").val() });
   });
 });

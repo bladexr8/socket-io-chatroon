@@ -2,22 +2,8 @@ var socketIo = require("socket.io");
 
 exports.initialize = function (server) {
   io = socketIo(server);
-  io.sockets.on("connection", function (socket) {
-    socket.on("message", function (message) {
-      //message = JSON.parse(message);
-      if (message.type === "userMessage") {
-        // Get nickname directly from socket data
-        const nickname = socket.data.nickname;
-        message.username = nickname;
 
-        // Send to all connected clients except sender
-        socket.broadcast.emit("message", message);
-
-        // Send to connecting client (sender) with modified type
-        message.type = "myMessage";
-        socket.emit("message", message);
-      }
-    });
+  const chatInfra = io.of("/chat_infra").on("connection", function (socket) {
     socket.on("set_name", function (data) {
       console.log("Received set_name Event...");
 
@@ -35,6 +21,36 @@ exports.initialize = function (server) {
 
       // broadcase user entry into chat
       socket.broadcast.emit("user_entered", data);
+    });
+  });
+
+  const chatCom = io.of("/chat_com").on("connection", function (socket) {
+    socket.on("message", function (message) {
+      console.log("Receiving Message on chatCom Channel...");
+      //message = JSON.parse(message);
+      if (message.type === "userMessage") {
+        // Get nickname directly from socket data
+        const nickname = socket.data.nickname;
+        message.username = nickname;
+
+        const clientMessage = {
+          type: message.type,
+          username: nickname,
+          message: message.message,
+        };
+
+        console.log(
+          "Sending Message to Client...",
+          JSON.stringify(clientMessage)
+        );
+
+        // Send to all connected clients except sender
+        socket.broadcast.emit("message", clientMessage);
+
+        // Send to connecting client (sender) with modified type
+        message.type = "myMessage";
+        socket.emit("message", clientMessage);
+      }
     });
   });
 };
